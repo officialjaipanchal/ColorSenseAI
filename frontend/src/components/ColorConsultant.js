@@ -104,53 +104,27 @@ const ColorConsultant = () => {
         Array.isArray(searchResults) &&
         searchResults.length > 0
       ) {
-        // Create a more detailed and creative message with color details
+        // Create a message with the color details
         const colorMessage = {
           role: "assistant",
-          content: `I've curated some beautiful colors for you:\n\n${searchResults
-            .map((color) => {
-              const roomSuggestions =
-                color.suggestedRooms?.join(", ") || "Living Room";
-              const styleTips = getStyleTips(color);
-              const lightingTips = getLightingTips(color);
-
-              return `🎨 ${color.name} (${color.code})
-• Hex: ${color.hex}
-• Description: ${color.description}
-• Perfect for: ${roomSuggestions}
-• Style Tips: ${styleTips}
-• Lighting Tips: ${lightingTips}
-• Mood: ${getMoodDescription(color)}
-• Pairing Suggestions: ${getColorPairings(color)}`;
-            })
-            .join("\n\n")}`,
+          content: `I found these colors that match your search:\n\n${searchResults
+            .map(
+              (color) =>
+                `Color: ${color.name} (${color.code}) - ${color.description}`
+            )
+            .join("\n")}`,
           allColors: searchResults,
-          suggestions: [
-            "Try these colors in different lighting conditions - morning, afternoon, and evening",
-            "Consider creating a mood board with fabric and furniture samples",
-            "Test the colors in small patches before committing to the full room",
-            "Think about how the colors will complement your existing furniture and decor",
-            "Consider the room's orientation and natural light when making your final choice",
-          ],
         };
         setMessages((prev) => [...prev, colorMessage]);
       } else {
-        // If no colors found, try the normal query with enhanced prompt
+        // If no colors found, try the normal query
         const response = await fetch("http://localhost:5001/api/query", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            message: `As a creative color consultant, provide detailed and practical color recommendations for: ${userMessage}. 
-            Consider the following aspects:
-            - Room's purpose and mood
-            - Natural and artificial lighting
-            - Furniture and decor compatibility
-            - Color psychology and emotional impact
-            - Current design trends
-            - Practical maintenance considerations
-            Include specific Benjamin Moore color codes and detailed explanations for each recommendation.`,
+            message: userMessage,
             conversationHistory: messages,
           }),
         });
@@ -187,43 +161,125 @@ const ColorConsultant = () => {
   // Parse Betty's response for color and suggestions
   const parseBettyResponse = async (message) => {
     const lines = message.split("\n");
-    const colorMatches = message.match(/Color: ([^(]+)\(([^)]+)\) - ([^\n]+)/g);
     const parsedColors = [];
     let suggestions = [];
 
-    if (colorMatches) {
-      for (const colorLine of colorMatches) {
-        const match = colorLine.match(/Color: ([^(]+)\(([^)]+)\) - ([^\n]+)/);
-        if (match) {
-          const colorName = match[1].trim();
-          const colorCode = match[2].trim();
-          const colorDesc = match[3].trim();
+    // Find all color sections (between the decorative lines)
+    const colorSections = message.split(
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    );
 
-          // Get color hex from the colors state or fetch it
-          let colorHex = colors[colorCode];
-          if (!colorHex) {
-            colorHex = await getColorHex(colorCode);
+    for (const section of colorSections) {
+      if (!section.trim()) continue;
+
+      // Extract color name and code
+      const nameMatch = section.match(/🎨 ([^(]+)\(([^)]+)\)/);
+      if (!nameMatch) continue;
+
+      const colorName = nameMatch[1].trim();
+      const colorCode = nameMatch[2].trim();
+
+      console.log(`Processing color: ${colorName} (${colorCode})`);
+
+      // Try to get hex code from multiple sources
+      let hex = null;
+
+      // 1. Try to get from the message
+      const hexMatch = section.match(/Hex:\s*(#[A-Fa-f0-9]{6})/i);
+      if (hexMatch) {
+        hex = hexMatch[1].toUpperCase();
+        console.log(`Found hex in message: ${hex}`);
+      }
+
+      // 2. Try to get from our local state
+      if (!hex && colors[colorCode]) {
+        hex = colors[colorCode];
+        console.log(`Found hex in state: ${hex}`);
+      }
+
+      // 3. Try to get from database
+      if (!hex) {
+        try {
+          console.log(`Fetching hex from database for ${colorCode}...`);
+          const response = await fetch(
+            `http://localhost:5001/api/colors/${colorCode}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data && data.data.hex) {
+              hex = data.data.hex.startsWith("#")
+                ? data.data.hex
+                : `#${data.data.hex}`;
+              console.log(`Found hex in database: ${hex}`);
+
+              // Update our local state
+              setColors((prev) => ({
+                ...prev,
+                [colorCode]: hex,
+              }));
+            }
           }
-
-          console.log(`Processing color ${colorCode}:`, {
-            colorName,
-            colorHex,
-          });
-
-          parsedColors.push({
-            name: colorName,
-            code: colorCode,
-            hex: colorHex,
-            description: colorDesc,
-            family: "Unknown",
-            collection: "Classic",
-            undertone: "Neutral",
-            lrv: "50",
-            suggestedRooms: ["Living Room"],
-            style: "Classic",
-          });
+        } catch (error) {
+          console.error(`Error fetching hex for ${colorCode}:`, error);
         }
       }
+
+      // If we still don't have a hex, use a default
+      if (!hex || hex === "#FFFFFF") {
+        console.warn(`No hex code found for ${colorCode}, using default`);
+        hex = "#FFFFFF";
+      }
+
+      // Extract description
+      const descMatch = section.match(/Description:\s*-\s*([^\n]+)/);
+      const description = descMatch ? descMatch[1].trim() : "";
+
+      // Extract family
+      const familyMatch = section.match(/Family:\s*([^\n]+)/);
+      const family = familyMatch ? familyMatch[1].trim() : "Unknown";
+
+      // Extract collection
+      const collectionMatch = section.match(/Collection:\s*([^\n]+)/);
+      const collection = collectionMatch
+        ? collectionMatch[1].trim()
+        : "Classic";
+
+      // Extract undertone
+      const undertoneMatch = section.match(/Undertone:\s*([^\n]+)/);
+      const undertone = undertoneMatch ? undertoneMatch[1].trim() : "Neutral";
+
+      // Extract LRV
+      const lrvMatch = section.match(/LRV:\s*([^\n]+)/);
+      const lrv = lrvMatch ? lrvMatch[1].trim() : "50";
+
+      // Extract suggested rooms
+      const roomsMatch = section.match(/Perfect for:\s*((?:[^\n]+\n?)+)/);
+      const suggestedRooms = roomsMatch
+        ? roomsMatch[1]
+            .split("\n")
+            .map((line) => line.replace(/^-\s*/, "").trim())
+            .filter(Boolean)
+        : ["Living Room"];
+
+      // Extract style
+      const styleMatch = section.match(/Style:\s*([^\n]+)/);
+      const style = styleMatch ? styleMatch[1].trim() : "Classic";
+
+      const colorData = {
+        name: colorName,
+        code: colorCode,
+        hex: hex,
+        description: description,
+        family: family,
+        collection: collection,
+        undertone: undertone,
+        lrv: lrv,
+        suggestedRooms: suggestedRooms,
+        style: style,
+      };
+
+      console.log(`Final color data for ${colorCode}:`, colorData);
+      parsedColors.push(colorData);
     }
 
     // Find suggestions
@@ -239,7 +295,7 @@ const ColorConsultant = () => {
 
     // If we have colors, return them with all details
     if (parsedColors.length > 0) {
-      return {
+      const response = {
         content: message,
         colorName: parsedColors[0].name,
         colorHex: parsedColors[0].hex,
@@ -248,6 +304,8 @@ const ColorConsultant = () => {
         suggestions,
         allColors: parsedColors,
       };
+      console.log("Final response:", response);
+      return response;
     }
 
     // Fallback to raw message if no colors found
@@ -603,55 +661,6 @@ const ColorConsultant = () => {
     }
   };
 
-  // Helper functions for enhanced color descriptions
-  const getStyleTips = (color) => {
-    const styles = {
-      Modern:
-        "Perfect for contemporary spaces with clean lines and minimal decor",
-      Traditional:
-        "Ideal for classic interiors with rich textures and detailed furnishings",
-      Transitional:
-        "Works well in spaces that blend traditional and modern elements",
-      Coastal: "Great for creating a light, airy beach-inspired atmosphere",
-      Farmhouse: "Perfect for rustic, warm, and inviting spaces",
-      Industrial:
-        "Ideal for urban lofts and spaces with exposed architectural elements",
-    };
-    return styles[color.style] || "Versatile enough for various design styles";
-  };
-
-  const getLightingTips = (color) => {
-    const tips = {
-      Warm: "Best in north-facing rooms, creates cozy atmosphere in evening light",
-      Cool: "Ideal for south-facing rooms, maintains freshness in bright light",
-      Neutral: "Adapts well to any lighting condition, very versatile",
-    };
-    return (
-      tips[color.undertone] ||
-      "Consider testing in your specific lighting conditions"
-    );
-  };
-
-  const getMoodDescription = (color) => {
-    const moods = {
-      Warm: "Inviting and cozy, promotes conversation and relaxation",
-      Cool: "Calming and serene, creates a peaceful atmosphere",
-      Neutral: "Balanced and harmonious, provides a perfect backdrop",
-    };
-    return (
-      moods[color.undertone] || "Creates a balanced and harmonious atmosphere"
-    );
-  };
-
-  const getColorPairings = (color) => {
-    const pairings = {
-      Warm: "Try pairing with soft grays, warm whites, or deep navy for contrast",
-      Cool: "Complements warm woods, creamy whites, and soft beiges beautifully",
-      Neutral: "Works well with both warm and cool tones, very versatile",
-    };
-    return pairings[color.undertone] || "Pairs well with a variety of colors";
-  };
-
   if (loading) {
     return (
       <div className="loading-container">
@@ -682,7 +691,7 @@ const ColorConsultant = () => {
   return (
     <div className="consultant-container" style={{ backgroundColor }}>
       <div className="chat-header">
-        <h2>Chat with AI</h2>
+        <h2>Chat with Betty</h2>
         <p>Your AI Color Consultant</p>
         {backgroundColor !== "#FFFFFF" && (
           <button className="reset-background" onClick={handleResetBackground}>
@@ -709,7 +718,8 @@ const ColorConsultant = () => {
           <div className="welcome-message">
             <h2>Welcome to ColorSense AI!</h2>
             <p>
-              I'm AI, your personal color consultant. How can I help you today?
+              I'm Betty, your personal color consultant. How can I help you
+              today?
             </p>
             <div className="suggestion-buttons">
               <button
@@ -912,7 +922,7 @@ const ColorConsultant = () => {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask AI about colors..."
+          placeholder="Ask Betty about colors..."
           disabled={isLoading}
         />
         <button type="submit" disabled={isLoading || !input.trim()}>

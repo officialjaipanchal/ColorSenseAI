@@ -1,14 +1,12 @@
 const axios = require("axios");
 const mongoose = require("mongoose");
 const Color = require("../models/Color");
+require("dotenv").config();
 
-mongoose.connect(
-  "mongodb+srv://ColorSense:ColorSenseAI@colorsense.beojeln.mongodb.net/",
-  {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  }
-);
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 // Function to determine color family based on hex color
 const getColorFamily = (hex) => {
