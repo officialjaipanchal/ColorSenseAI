@@ -44,8 +44,8 @@ ColorSense AI is an intelligent color consultation and exploration platform that
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/colorsense-ai.git
-cd colorsense-ai
+git clone https://github.com/officialjaipanchal/ColorSenseAI.git
+cd ColorSenseAI
 ```
 
 2. Install frontend dependencies:
@@ -65,11 +65,6 @@ npm install
 PORT=5001
 MONGODB_URI=your_mongodb_uri
 GEMINI_API_KEY=your_gemini_api_key
-```
-
-5. Create a `.env` file in the frontend directory:
-```env
-REACT_APP_API_URL=http://localhost:5001/api
 ```
 
 ### Running the Application
@@ -122,8 +117,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Benjamin Moore for color inspiration
 - Google Gemini AI for powering the color recommendations
 - React community for the amazing tools and libraries
-
-## Contact 📧
-
-Your Name - [@yourtwitter](https://twitter.com/yourtwitter)
-Project Link: [https://github.com/yourusername/colorsense-ai](https://github.com/yourusername/colorsense-ai) 
