@@ -17,7 +17,7 @@ const ColorConsultant = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
-  const MAX_RETRIES = 3;
+  const MAX_RETRIES = 3; // eslint-disable-line no-unused-vars
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -104,7 +104,7 @@ const ColorConsultant = () => {
         Array.isArray(searchResults) &&
         searchResults.length > 0
       ) {
-        // Create a message with the color details
+        // Create a message with the color details and interactive elements
         const colorMessage = {
           role: "assistant",
           content: `I found these colors that match your search:\n\n${searchResults
@@ -114,6 +114,12 @@ const ColorConsultant = () => {
             )
             .join("\n")}`,
           allColors: searchResults,
+          suggestions: [
+            "Would you like to see how these colors look in different rooms?",
+            "Would you like to see complementary colors?",
+            "Would you like to see these colors in different lighting conditions?",
+            "Would you like to see application tips for these colors?",
+          ],
         };
         setMessages((prev) => [...prev, colorMessage]);
       } else {
@@ -137,7 +143,242 @@ const ColorConsultant = () => {
 
         // Parse Betty's response for color and suggestions
         const parsed = await parseBettyResponse(data.response);
-        setMessages((prev) => [...prev, { role: "assistant", ...parsed }]);
+
+        // Generate dynamic suggestions based on the color being discussed
+        const generateSuggestions = (colorData) => {
+          if (!colorData || !colorData.name) return [];
+
+          // Get current season and time of day for contextual suggestions
+          const getSeason = () => {
+            const month = new Date().getMonth();
+            if (month >= 2 && month <= 4) return "spring";
+            if (month >= 5 && month <= 7) return "summer";
+            if (month >= 8 && month <= 10) return "fall";
+            return "winter";
+          };
+
+          const getTimeOfDay = () => {
+            const hour = new Date().getHours();
+            if (hour >= 5 && hour < 12) return "morning";
+            if (hour >= 12 && hour < 17) return "afternoon";
+            if (hour >= 17 && hour < 21) return "evening";
+            return "night";
+          };
+
+          const currentSeason = getSeason();
+          const timeOfDay = getTimeOfDay();
+          const isDarkColor = colorData.lrv && parseInt(colorData.lrv) < 50;
+          const isWarmUndertone = colorData.undertone
+            ?.toLowerCase()
+            .includes("warm");
+          const isCoolUndertone = colorData.undertone
+            ?.toLowerCase()
+            .includes("cool");
+          const isNeutralUndertone = colorData.undertone
+            ?.toLowerCase()
+            .includes("neutral");
+
+          // Generate contextual suggestions based on time and season
+          const getContextualSuggestions = () => {
+            const suggestions = [];
+
+            // Time of day specific suggestions
+            if (timeOfDay === "morning") {
+              suggestions.push(
+                `What's the best way to use ${colorData.name} in morning light?`,
+                `How can I make ${colorData.name} work well in a morning space?`
+              );
+            } else if (timeOfDay === "evening") {
+              suggestions.push(
+                `What's the best way to use ${colorData.name} in evening light?`,
+                `How can I make ${colorData.name} work well in an evening space?`
+              );
+            }
+
+            // Seasonal specific suggestions
+            if (currentSeason === "summer") {
+              suggestions.push(
+                `What's the best way to use ${colorData.name} in summer?`,
+                `How can I make ${colorData.name} work well in a summer space?`
+              );
+            } else if (currentSeason === "winter") {
+              suggestions.push(
+                `What's the best way to use ${colorData.name} in winter?`,
+                `How can I make ${colorData.name} work well in a winter space?`
+              );
+            }
+
+            return suggestions;
+          };
+
+          const baseSuggestions = [
+            // Design-focused suggestions
+            `What's the best way to use ${colorData.name} in a small space?`,
+            `How can I create a focal point with ${colorData.name}?`,
+            `What's the ideal lighting setup for ${colorData.name}?`,
+            `How can I make ${colorData.name} feel more cozy?`,
+            `What's the best way to make ${colorData.name} feel more spacious?`,
+
+            // Color combination suggestions
+            `What colors create a dramatic look with ${colorData.name}?`,
+            `What colors create a calming atmosphere with ${colorData.name}?`,
+            `What colors create an energetic space with ${colorData.name}?`,
+            `What colors create a sophisticated look with ${colorData.name}?`,
+
+            // Application suggestions
+            `What's the best way to transition ${colorData.name} between rooms?`,
+            `How can I use ${colorData.name} as an accent color?`,
+            `What's the best way to use ${colorData.name} on different surfaces?`,
+            `How can I create depth with ${colorData.name}?`,
+
+            // Style-specific suggestions
+            `How can I use ${colorData.name} in a minimalist design?`,
+            `How can I use ${colorData.name} in a traditional setting?`,
+            `How can I use ${colorData.name} in a contemporary space?`,
+            `How can I use ${colorData.name} in a transitional design?`,
+
+            // Mood-based suggestions
+            `How can I create a relaxing atmosphere with ${colorData.name}?`,
+            `How can I make ${colorData.name} feel more inviting?`,
+            `How can I create a productive environment with ${colorData.name}?`,
+            `How can I make ${colorData.name} feel more luxurious?`,
+
+            // Texture and material suggestions
+            `What textures work well with ${colorData.name}?`,
+            `What materials complement ${colorData.name}?`,
+            `How can I add dimension to ${colorData.name}?`,
+            `What finishes work best with ${colorData.name}?`,
+          ];
+
+          // Add contextual suggestions
+          baseSuggestions.push(...getContextualSuggestions());
+
+          // Add room-specific suggestions with more context
+          if (colorData.suggestedRooms && colorData.suggestedRooms.length > 0) {
+            colorData.suggestedRooms.forEach((room) => {
+              baseSuggestions.push(
+                `What's the best way to use ${
+                  colorData.name
+                } in a ${room.toLowerCase()}?`,
+                `How can I make ${
+                  colorData.name
+                } work in a small ${room.toLowerCase()}?`,
+                `What colors complement ${
+                  colorData.name
+                } in a ${room.toLowerCase()}?`,
+                `How can I create a focal point with ${
+                  colorData.name
+                } in a ${room.toLowerCase()}?`,
+                `What's the best lighting for ${
+                  colorData.name
+                } in a ${room.toLowerCase()}?`,
+                `How can I make ${
+                  colorData.name
+                } feel more spacious in a ${room.toLowerCase()}?`,
+                `What furniture styles work best with ${
+                  colorData.name
+                } in a ${room.toLowerCase()}?`,
+                `How can I accessorize with ${
+                  colorData.name
+                } in a ${room.toLowerCase()}?`
+              );
+            });
+          }
+
+          // Add undertone-specific suggestions
+          if (colorData.undertone) {
+            baseSuggestions.push(
+              `How can I enhance the ${colorData.undertone.toLowerCase()} undertone of ${
+                colorData.name
+              }?`,
+              `What colors bring out the ${colorData.undertone.toLowerCase()} in ${
+                colorData.name
+              }?`,
+              `How can I balance the ${colorData.undertone.toLowerCase()} undertone of ${
+                colorData.name
+              }?`,
+              isWarmUndertone
+                ? `How can I make ${colorData.name} feel more inviting?`
+                : isCoolUndertone
+                ? `How can I make ${colorData.name} feel more refreshing?`
+                : isNeutralUndertone
+                ? `How can I make ${colorData.name} feel more balanced?`
+                : `How can I make ${colorData.name} feel more harmonious?`
+            );
+          }
+
+          // Add LRV-specific suggestions
+          if (colorData.lrv) {
+            if (isDarkColor) {
+              baseSuggestions.push(
+                `How can I make ${colorData.name} feel lighter?`,
+                `What's the best way to use ${colorData.name} in a dark room?`,
+                `How can I prevent ${colorData.name} from feeling too heavy?`,
+                `What lighting works best with ${colorData.name}?`,
+                `How can I create contrast with ${colorData.name}?`,
+                `What light colors complement ${colorData.name}?`
+              );
+            } else {
+              baseSuggestions.push(
+                `How can I make ${colorData.name} feel more grounded?`,
+                `What's the best way to use ${colorData.name} in a bright room?`,
+                `How can I add depth to ${colorData.name}?`,
+                `What colors create contrast with ${colorData.name}?`,
+                `How can I make ${colorData.name} feel more substantial?`,
+                `What dark colors complement ${colorData.name}?`
+              );
+            }
+          }
+
+          // Add collection-specific suggestions
+          if (colorData.collection) {
+            baseSuggestions.push(
+              `How can I use ${colorData.name} with other colors from the ${colorData.collection} collection?`,
+              `What's the best way to showcase ${colorData.name} from the ${colorData.collection} collection?`,
+              `How can I create a cohesive look with ${colorData.name} and the ${colorData.collection} collection?`,
+              `What's the inspiration behind ${colorData.name} in the ${colorData.collection} collection?`,
+              `How can I build a color story around ${colorData.name} from the ${colorData.collection} collection?`,
+              `What other colors from the ${colorData.collection} collection create a harmonious palette with ${colorData.name}?`
+            );
+          }
+
+          // Add style-specific suggestions
+          if (colorData.style) {
+            baseSuggestions.push(
+              `How can I use ${
+                colorData.name
+              } in a ${colorData.style.toLowerCase()} style?`,
+              `What furniture styles complement ${
+                colorData.name
+              } in a ${colorData.style.toLowerCase()} design?`,
+              `How can I accessorize with ${
+                colorData.name
+              } in a ${colorData.style.toLowerCase()} space?`,
+              `What patterns work well with ${
+                colorData.name
+              } in a ${colorData.style.toLowerCase()} setting?`,
+              `How can I create a ${colorData.style.toLowerCase()} mood with ${
+                colorData.name
+              }?`,
+              `What architectural elements work best with ${
+                colorData.name
+              } in a ${colorData.style.toLowerCase()} design?`
+            );
+          }
+
+          // Shuffle and return top 5 suggestions
+          return baseSuggestions.sort(() => Math.random() - 0.5).slice(0, 5);
+        };
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            ...parsed,
+            suggestions: generateSuggestions(parsed.allColors?.[0]),
+            interactive: true,
+          },
+        ]);
       }
     } catch (error) {
       console.error("Error in handleSubmit:", error);
@@ -147,15 +388,16 @@ const ColorConsultant = () => {
           role: "assistant",
           content:
             "I'm having trouble processing your request. Please try again.",
+          suggestions: [
+            "Try rephrasing your question",
+            "Try being more specific about your needs",
+            "Try asking about a specific room or style",
+          ],
         },
       ]);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleSuggestionClick = (suggestion) => {
-    setInput(suggestion);
   };
 
   // Parse Betty's response for color and suggestions
@@ -383,7 +625,8 @@ const ColorConsultant = () => {
   };
 
   // Update the renderColorSwatches function to show hex codes
-  const renderColorSwatches = (message) => {
+
+  const renderColorSwatches = (message) => { // eslint-disable-line no-unused-vars
     const colors = extractColorCodes(message);
     if (colors.length === 0) return null;
 
@@ -404,29 +647,43 @@ const ColorConsultant = () => {
                     <span className="color-code">{color.code}</span>
                     <span className="hex-code">{color.hex}</span>
                   </div>
+                  <div className="color-details">
+                    <span className="color-family">{color.family}</span>
+                    <span className="color-collection">{color.collection}</span>
+                    <span className="color-undertone">{color.undertone}</span>
+                    <span className="color-lrv">LRV: {color.lrv}</span>
+                  </div>
+                  <div className="color-actions">
+                    <button
+                      className="view-color-btn"
+                      onClick={() => handleColorClick(color.hex)}
+                    >
+                      Preview Color
+                    </button>
+                    <a
+                      href={getBenjaminMooreUrl(color.code)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="view-color-link"
+                    >
+                      View on Benjamin Moore
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                        <polyline points="15 3 21 3 21 9" />
+                        <line x1="10" y1="14" x2="21" y2="3" />
+                      </svg>
+                    </a>
+                  </div>
                 </div>
-                <a
-                  href={getBenjaminMooreUrl(color.code)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="view-color-link"
-                >
-                  View on Benjamin Moore
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                    <polyline points="15 3 21 3 21 9" />
-                    <line x1="10" y1="14" x2="21" y2="3" />
-                  </svg>
-                </a>
               </div>
             )
         )}
@@ -446,7 +703,7 @@ const ColorConsultant = () => {
     );
     const colorDetails = colorMatches
       ? colorMatches.map((match) => {
-          const [_, name, code, desc] = match.match(
+          const [_, name, code, desc] = match.match( // eslint-disable-line no-unused-vars
             /Color: ([^(]+)\(([A-Z0-9-]+)\) - ([^\n]+)/
           );
           return { name: name.trim(), code, desc: desc.trim() };
@@ -853,7 +1110,7 @@ const ColorConsultant = () => {
                             >
                               {colorCode}
                             </span>
-                            <span
+                            {/* <span
                               className="hex-code"
                               style={{
                                 backgroundColor: colorHex,
@@ -874,7 +1131,7 @@ const ColorConsultant = () => {
                               }}
                             >
                               {colorHex}
-                            </span>
+                            </span> */}
                           </div>
                         )}
                         <div className="color-desc">{colorDesc}</div>
