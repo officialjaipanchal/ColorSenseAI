@@ -19,6 +19,34 @@ ColorSense AI is an intelligent color consultation and exploration platform that
 - **Color Pairings**: Discover complementary colors
 - **Style Guidance**: Get recommendations for different design styles
 
+## Screenshots 📷 
+
+### 🏠 Home Page  
+A clean, welcoming interface that introduces users to the app and invites them to start exploring color palettes or chat with the AI assistant.
+![Home](https://github.com/user-attachments/assets/2ff1c6f0-bd2f-48b0-882a-faceff266ac4)
+
+### 🎨 Browse Colors  
+Visually rich browsing experience with a diverse range of color palettes. Each palette is displayed with clarity, making it easy to choose the right tone for any paint project.
+![Browse Color](https://github.com/user-attachments/assets/9beb0834-efa2-4007-a8ec-4e7b28b8d883)
+
+### 🔍 Search with Filters  
+A Search and filtering system to find colors by name, tone, or category. Designed for speed and precision to help users narrow down choices effectively.
+![Search filter](https://github.com/user-attachments/assets/dec14378-2b6f-47df-ba82-1e56ba646aeb)
+
+### 🧪 Advanced Filters  
+Apply multiple filters to refine your color palette search — perfect for designers looking for just the right shade for their work.
+![Filters](https://github.com/user-attachments/assets/50b957a8-52fc-4557-a7fd-217920167f35)
+
+### 💬 Chat Assistant Home  
+An AI-powered chatbot ready to assist users with color recommendations, palette creation, or answering design-related queries.
+![Chat home](https://github.com/user-attachments/assets/31e14a8c-17f0-42e5-8caf-0abecfe9caba)
+
+### 🤖 Chatbot Interaction  
+Interactive and conversational UI that lets users engage naturally with the AI assistant. Whether you need help finding the right color or naming a palette, the chatbot's got your back!
+![Chat bot](https://github.com/user-attachments/assets/d91e3677-03db-430d-9e6b-654d2ba1c407)
+
+
+
 ## Tech Stack 🛠
 
 ### Frontend
