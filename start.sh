@@ -13,4 +13,4 @@ fi
 
 # Start both servers
 echo "Starting ColorSense AI servers..."
-concurrently "cd backend && npm run dev" "cd frontend && npm start" 
+concurrently "cd backend && python backenddriver.py" "cd frontend && npm start" 
