@@ -1,6 +1,6 @@
 # ColorSense AI 🎨
 
-ColorSense AI is an intelligent color consultation and exploration platform that helps users discover, analyze, and work with colors in a smart and intuitive way. Built with React and Node.js, it combines the power of AI with a beautiful user interface to provide an exceptional color experience.
+ColorSense AI is an intelligent color consultation and exploration platform that helps users discover, analyze, and work with colors in a smart and intuitive way. Built with React and Python, it combines the power of AI with a beautiful user interface to provide an exceptional color experience.
 
 ## Features ✨
 
@@ -45,8 +45,6 @@ An AI-powered chatbot ready to assist users with color recommendations, palette 
 Interactive and conversational UI that lets users engage naturally with the AI assistant. Whether you need help finding the right color or naming a palette, the chatbot's got your back!
 ![Chat bot](https://github.com/user-attachments/assets/d91e3677-03db-430d-9e6b-654d2ba1c407)
 
-
-
 ## Tech Stack 🛠
 
 ### Frontend
@@ -56,14 +54,16 @@ Interactive and conversational UI that lets users engage naturally with the AI a
 - Axios for API calls
 
 ### Backend
-- Node.js
-- Express.js
-- MongoDB
+- Python
+- FastAPI/Flask
+- MongoDB with PyMongo
+- aiohttp for async HTTP requests
 - Google Gemini AI API
 
 ## Getting Started 🚀
 
 ### Prerequisites
+- Python 3.8 or higher
 - Node.js (v14 or higher)
 - MongoDB
 - Google Gemini API key
@@ -85,7 +85,7 @@ npm install
 3. Install backend dependencies:
 ```bash
 cd ../backend
-npm install
+pip install -r requirements.txt
 ```
 
 4. Create a `.env` file in the backend directory:
@@ -100,7 +100,7 @@ GEMINI_API_KEY=your_gemini_api_key
 1. Start the backend server:
 ```bash
 cd backend
-npm start
+python app.py  # or the appropriate entry point
 ```
 
 2. Start the frontend development server:
@@ -126,6 +126,17 @@ The application will be available at `http://localhost:3000`
 3. View color palettes and combinations
 4. Save your favorite suggestions
 
+### Color Data Management
+The project includes a script to fetch and process color data from Benjamin Moore's API:
+```bash
+cd backend/Scripts
+python fetch_colors.py
+```
+This script will:
+- Fetch colors from Benjamin Moore's API
+- Process color data (family, undertone, LRV, etc.)
+- Store the processed data in MongoDB
+
 ## Contributing 🤝
 
 Contributions are welcome! Please feel free to submit a Pull Request.
@@ -145,3 +156,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Benjamin Moore for color inspiration
 - Google Gemini AI for powering the color recommendations
 - React community for the amazing tools and libraries
+- Python community for the excellent async libraries
