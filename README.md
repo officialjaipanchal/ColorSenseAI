@@ -56,15 +56,14 @@ Interactive and conversational UI that lets users engage naturally with the AI a
 - Axios for API calls
 
 ### Backend
-- Node.js
-- Express.js
-- MongoDB
+- Python
 - Google Gemini AI API
 
 ## Getting Started 🚀
 
 ### Prerequisites
 - Node.js (v14 or higher)
+- Python
 - MongoDB
 - Google Gemini API key
 
@@ -82,12 +81,6 @@ cd frontend
 npm install
 ```
 
-3. Install backend dependencies:
-```bash
-cd ../backend
-npm install
-```
-
 4. Create a `.env` file in the backend directory:
 ```env
 PORT=5001
@@ -100,7 +93,7 @@ GEMINI_API_KEY=your_gemini_api_key
 1. Start the backend server:
 ```bash
 cd backend
-npm start
+python backenddriver.py
 ```
 
 2. Start the frontend development server:
@@ -145,3 +138,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Benjamin Moore for color inspiration
 - Google Gemini AI for powering the color recommendations
 - React community for the amazing tools and libraries
+- Python
